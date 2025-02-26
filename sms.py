@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 import telebot
 from telebot import types
 
-# Token của bot Telegram (lấy từ BotFather)
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE"
+# Token của bot Telegram (thay bằng token thực tế từ BotFather)
+TOKEN = "7228865349:AAGRGenJYqtEK-1UEEklRxrDkn5eaEJ-0nI"  # Thay token của bạn vào đây
 
 # API Key của yeumoney
 YEUMONEY_API_URL = "https://yeumoney.com/QL_api.php?token=5f8ca8734e93fabf98f50400ca8744f5d929aa41768059813680cc3f52fd4b1e&url="
@@ -42,7 +42,6 @@ def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'r') as f:
             data = json.load(f)
-            # Chuyển đổi chuỗi datetime về đối tượng datetime
             verified_users = {int(k): datetime.fromisoformat(v) for k, v in data.get("verified_users", {}).items()}
             user_codes = {
                 int(k): {
@@ -66,7 +65,7 @@ def save_data():
 # Tạo tên ngẫu nhiên
 def generate_random_name():
     last_name = random.choice(last_names)
-    middle_name = random.choice(middle_names) if random.choice([True, False]) else ''  # Optional middle name
+    middle_name = random.choice(middle_names) if random.choice([True, False]) else ''
     first_name = random.choice(first_names)
     return f"{last_name} {middle_name} {first_name}".strip()
 
@@ -165,24 +164,23 @@ def sms_command(message):
             # Dùng lại key cũ nếu chưa xác minh
             code = user_codes[user_id]["code"]
 
-        # Tạo URL với key
+        # Tạo URL với key và rút gọn qua yeumoney
         verification_url = KEY_WEBSITE_URL.format(key=code)
         shortened_url = shorten_link_with_yeumoney(verification_url)
 
         # Tạo nút inline
         keyboard = types.InlineKeyboardMarkup()
-        verify_button = types.InlineKeyboardButton("Xác minh để sử dụng", url=shortened_url)
+        verify_button = types.InlineKeyboardButton("Vượt Link Lấy Key", url=shortened_url)
         keyboard.add(verify_button)
 
         bot.reply_to(
             message,
-            f"Bạn cần xác minh trước khi sử dụng bot.\nMã key của bạn là: `{code}`\nNhấn nút dưới đây để vượt link và xác minh:\n(Key có hiệu lực trong {KEY_EXPIRY_DAYS} ngày)",
-            reply_markup=keyboard,
-            parse_mode="Markdown"
+            f"Bạn chưa xác minh để sử dụng bot.\nNhấn nút dưới đây để vượt link qua YeuMoney và lấy mã key:\n(Key sẽ có hiệu lực trong {KEY_EXPIRY_DAYS} ngày sau khi xác minh)",
+            reply_markup=keyboard
         )
         bot.send_message(
             message.chat.id,
-            "Sau khi vượt link, nhập mã key bằng lệnh: /verify <mã key>"
+            "Sau khi vượt link và lấy key, dùng lệnh: /verify <mã key> để xác minh."
         )
         return
 
@@ -234,7 +232,7 @@ def verify_command(message):
         save_data()  # Lưu dữ liệu vào file
         bot.reply_to(message, f"Xác minh thành công! Bạn có thể sử dụng lệnh /sms trong {KEY_EXPIRY_DAYS} ngày.")
     else:
-        bot.reply_to(message, "Mã key không đúng hoặc không thuộc về bạn. Vui lòng dùng lệnh /sms để lấy key của bạn.")
+        bot.reply_to(message, "Mã key không đúng hoặc không thuộc về bạn. Vui lòng dùng lệnh /sms để lấy key mới qua YeuMoney.")
 
 # Hàm chính để khởi động bot
 def main():
